@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="nko-nto-frontend/public/nko-nto-logo.png" alt="nko-nto logo" width="180" />
+</p>
+
 # nko-nto
 
 A self-hosted invoicing and expense tracking application for small businesses. Manage invoices, bills, contacts, exchange rates, and team members from a single web interface.
