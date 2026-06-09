@@ -1,0 +1,5 @@
+ALTER TABLE contact DROP COLUMN address;
+ALTER TABLE contact ADD COLUMN street      VARCHAR(200);
+ALTER TABLE contact ADD COLUMN postal_code VARCHAR(20);
+ALTER TABLE contact ADD COLUMN state       VARCHAR(100);
+ALTER TABLE contact ADD COLUMN country     VARCHAR(100);
