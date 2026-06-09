@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="nko-nto-frontend/public/nko-nto-logo.png" alt="nko-nto logo" width="180" />
+  <img src="nko-nto-frontend/public/nko-nto-logo.png" alt="nko-nto logo" width="240" />
 </p>
 
 # nko-nto
