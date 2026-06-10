@@ -1,6 +1,7 @@
 package de.nkotech.nkonto.controller;
 
 import de.nkotech.nkonto.persistence.AppSettingsData;
+import de.nkotech.nkonto.persistence.AppSettingsResponse;
 import de.nkotech.nkonto.security.SecurityService;
 import de.nkotech.nkonto.service.AppSettingsService;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ public class AppSettingsController {
     private final SecurityService securityService;
 
     @GetMapping
-    public AppSettingsData get() {
+    public AppSettingsResponse get() {
         UUID companyId = securityService.currentCompanyId();
         return service.get(companyId);
     }

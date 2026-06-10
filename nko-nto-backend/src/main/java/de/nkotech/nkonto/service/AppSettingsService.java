@@ -2,6 +2,7 @@ package de.nkotech.nkonto.service;
 
 import de.nkotech.nkonto.persistence.AppSettingsData;
 import de.nkotech.nkonto.persistence.AppSettingsEntity;
+import de.nkotech.nkonto.persistence.AppSettingsResponse;
 import de.nkotech.nkonto.persistence.CompanyEntity;
 import de.nkotech.nkonto.persistence.repository.AppSettingsRepository;
 import de.nkotech.nkonto.persistence.repository.CompanyRepository;
@@ -18,10 +19,12 @@ public class AppSettingsService {
     private final AppSettingsRepository repository;
     private final CompanyRepository companyRepository;
 
-    public AppSettingsData get(UUID companyId) {
-        return repository.findByCompanyId(companyId)
+    public AppSettingsResponse get(UUID companyId) {
+        CompanyEntity company = companyRepository.getReferenceById(companyId);
+        AppSettingsData data = repository.findByCompanyId(companyId)
                 .map(AppSettingsEntity::getSettings)
                 .orElse(AppSettingsData.defaults());
+        return AppSettingsResponse.from(data, company.getName());
     }
 
     @Transactional
