@@ -10,8 +10,11 @@ import ReceiptIcon from '@mui/icons-material/Receipt';
 import RequestPageIcon from '@mui/icons-material/RequestPage';
 import PeopleIcon from '@mui/icons-material/People';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts';
 
-import { getDashboardSummary, getInvoices, getBills } from '../../../utils/api';
+import { getDashboardSummary, getInvoices, getBills, getDashboardMonthlyChart } from '../../../utils/api';
 
 function StatCard({ label, value, sub, icon, color, loading }) {
   return (
@@ -72,6 +75,40 @@ const INVOICE_STATUS_COLORS = {
 const BILL_STATUS_COLORS = {
   PENDING: 'warning', PAID: 'success', OVERDUE: 'error', CANCELLED: 'default',
 };
+
+function fmtEurShort(value) {
+  const n = Number(value ?? 0);
+  if (Math.abs(n) >= 1000) return `${(n / 1000).toFixed(1)}k €`;
+  return `${n.toFixed(0)} €`;
+}
+
+function EarningsChart({ data, loading }) {
+  const { t } = useTranslation();
+  return (
+    <Card sx={{ mb: 4 }}>
+      <CardContent>
+        <Typography variant="subtitle1" fontWeight={600} mb={2}>
+          {t('dashboard.monthlyOverview')}
+        </Typography>
+        {loading ? (
+          <Skeleton variant="rectangular" height={260} sx={{ borderRadius: 1 }} />
+        ) : (
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }} barCategoryGap="30%">
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.06)" />
+              <XAxis dataKey="label" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
+              <YAxis tickFormatter={fmtEurShort} tick={{ fontSize: 12 }} axisLine={false} tickLine={false} width={56} />
+              <Tooltip formatter={(value) => fmtEur(value)} />
+              <Legend wrapperStyle={{ fontSize: 13 }} />
+              <Bar dataKey="earnings" name={t('dashboard.earnings')} fill="#10B981" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="spendings" name={t('dashboard.spendings')} fill="#EF4444" radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 function RecentTable({ title, rows, loading, columns, onRowClick, viewAllPath, emptyKey }) {
   const { t } = useTranslation();
@@ -137,6 +174,8 @@ export default function DashboardView() {
   const [recentBills, setRecentBills] = useState([]);
   const [invoicesLoading, setInvoicesLoading] = useState(true);
   const [billsLoading, setBillsLoading] = useState(true);
+  const [chartData, setChartData] = useState([]);
+  const [chartLoading, setChartLoading] = useState(true);
 
   useEffect(() => {
     getDashboardSummary()
@@ -152,6 +191,18 @@ export default function DashboardView() {
       .then((res) => setRecentBills(res.data.content))
       .catch(() => {})
       .finally(() => setBillsLoading(false));
+
+    getDashboardMonthlyChart()
+      .then((res) => {
+        const formatted = res.data.map(({ year, month, earnings, spendings }) => ({
+          label: new Date(year, month - 1).toLocaleString(undefined, { month: 'short', year: '2-digit' }),
+          earnings: Number(earnings),
+          spendings: Number(spendings),
+        }));
+        setChartData(formatted);
+      })
+      .catch(() => {})
+      .finally(() => setChartLoading(false));
   }, []);
 
   const summaryCards = [
@@ -198,6 +249,8 @@ export default function DashboardView() {
       }}>
         {summaryCards.map((card) => <StatCard key={card.label} {...card} loading={loading} />)}
       </Box>
+
+      <EarningsChart data={chartData} loading={chartLoading} />
 
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
         <RecentTable
