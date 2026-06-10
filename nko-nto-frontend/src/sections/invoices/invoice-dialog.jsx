@@ -10,12 +10,12 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 
-import { createInvoice, getContacts, updateInvoice } from '../../utils/api';
+import { createInvoice, getContacts, getItems, updateInvoice } from '../../utils/api';
 
 const CURRENCIES = ['EUR', 'USD', 'ZAR'];
 const STATUSES   = ['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED'];
 const today      = () => new Date().toISOString().split('T')[0];
-const emptyLine  = () => ({ description: '', quantity: '1', unitPrice: '', vatRate: '0' });
+const emptyLine  = () => ({ itemId: '', description: '', quantity: '1', unitPrice: '', vatRate: '0' });
 const EMPTY      = () => ({ number: '', contactId: '', issueDate: today(), dueDate: '', currency: 'EUR', status: 'DRAFT', notes: '' });
 
 function lineNet(l)   { return (parseFloat(l.quantity) || 0) * (parseFloat(l.unitPrice) || 0); }
@@ -38,17 +38,33 @@ function fromInitial(d) {
   };
 }
 
-function linesFromInitial(lines) {
-  if (!lines?.length) return [emptyLine()];
-  return lines.map((l) => ({
-    description: l.description ?? '',
-    quantity:    String(l.quantity   ?? '1'),
-    unitPrice:   String(l.unitPrice  ?? ''),
-    vatRate:     String(l.vatRate    ?? '0'),
-  }));
+function fromDuplicate(d) {
+  return {
+    number:    '',
+    contactId: d.contact?.id ?? '',
+    issueDate: today(),
+    dueDate:   '',
+    currency:  d.currency  ?? 'EUR',
+    status:    'DRAFT',
+    notes:     d.notes     ?? '',
+  };
 }
 
-export default function InvoiceDialog({ open, onClose, onSuccess, initialData }) {
+function linesFromInitial(lines, items) {
+  if (!lines?.length) return [emptyLine()];
+  return lines.map((l) => {
+    const matched = items.find((it) => it.name === l.description);
+    return {
+      itemId:      matched ? matched.id : '',
+      description: l.description ?? '',
+      quantity:    String(l.quantity  ?? '1'),
+      unitPrice:   String(l.unitPrice ?? ''),
+      vatRate:     String(l.vatRate   ?? '0'),
+    };
+  });
+}
+
+export default function InvoiceDialog({ open, onClose, onSuccess, initialData, duplicateData }) {
   const { t } = useTranslation();
   const isEdit = !!initialData;
   const [form, setForm]         = useState(EMPTY());
@@ -57,14 +73,24 @@ export default function InvoiceDialog({ open, onClose, onSuccess, initialData })
   const [saving, setSaving]     = useState(false);
   const [apiError, setApiError] = useState('');
   const [contacts, setContacts] = useState([]);
+  const [items, setItems]       = useState([]);
 
   useEffect(() => {
     if (open) {
-      setForm(isEdit ? fromInitial(initialData) : EMPTY());
-      setLines(isEdit ? linesFromInitial(initialData.lines) : [emptyLine()]);
+      // eslint-disable-next-line no-nested-ternary
+      setForm(duplicateData ? fromDuplicate(duplicateData) : isEdit ? fromInitial(initialData) : EMPTY());
       setErrors({});
       setApiError('');
-      getContacts().then((r) => setContacts(r.data.content)).catch(() => setContacts([]));
+      Promise.all([
+        getContacts().catch(() => ({ data: { content: [] } })),
+        getItems().catch(() => ({ data: [] })),
+      ]).then(([contactsRes, itemsRes]) => {
+        setContacts(contactsRes.data.content);
+        const loadedItems = itemsRes.data;
+        setItems(loadedItems);
+        // eslint-disable-next-line no-nested-ternary
+        setLines(duplicateData ? linesFromInitial(duplicateData.lines, loadedItems) : isEdit ? linesFromInitial(initialData.lines, loadedItems) : [emptyLine()]);
+      });
     }
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -72,6 +98,25 @@ export default function InvoiceDialog({ open, onClose, onSuccess, initialData })
   const setLine    = (i, f) => (e) => setLines((prev) => prev.map((l, idx) => idx === i ? { ...l, [f]: e.target.value } : l));
   const addLine    = () => setLines((prev) => [...prev, emptyLine()]);
   const removeLine = (i) => setLines((prev) => prev.filter((_, idx) => idx !== i));
+
+  const handleItemSelect = (i) => (e) => {
+    const itemId = e.target.value;
+    const item = items.find((it) => it.id === itemId);
+    setLines((prev) => prev.map((l, idx) => idx === i
+      ? { ...l, itemId, description: item ? item.name : '', unitPrice: item ? String(item.defaultPrice) : '', vatRate: item ? String(item.defaultVatRate) : '0' }
+      : l));
+  };
+
+  const handleCurrencyChange = (e) => {
+    const currency = e.target.value;
+    setForm((prev) => ({ ...prev, currency }));
+    setLines((prev) => prev.map((l) => {
+      if (!l.itemId) return l;
+      const item = items.find((it) => it.id === l.itemId);
+      if (item && item.currency !== currency) return emptyLine();
+      return l;
+    }));
+  };
 
   const handleContactChange = (e) => {
     const id = e.target.value;
@@ -82,7 +127,7 @@ export default function InvoiceDialog({ open, onClose, onSuccess, initialData })
     }
   };
 
-  const hasValidLines = lines.some((l) => l.description.trim() && parseFloat(l.unitPrice) > 0);
+  const hasValidLines = lines.some((l) => l.itemId && parseFloat(l.unitPrice) > 0);
   const subtotal = lines.reduce((s, l) => s + lineNet(l), 0);
   const vatTotal = lines.reduce((s, l) => s + lineVat(l), 0);
   const total    = subtotal + vatTotal;
@@ -111,7 +156,7 @@ export default function InvoiceDialog({ open, onClose, onSuccess, initialData })
       status:    form.status,
       notes:     form.notes    || null,
       lines: lines
-        .filter((l) => l.description.trim() && parseFloat(l.unitPrice) > 0)
+        .filter((l) => l.itemId && parseFloat(l.unitPrice) > 0)
         .map((l) => ({
           description: l.description.trim(),
           quantity:    parseFloat(l.quantity)  || 1,
@@ -135,7 +180,10 @@ export default function InvoiceDialog({ open, onClose, onSuccess, initialData })
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle sx={{ fontWeight: 700 }}>{isEdit ? t('invoices.editInvoice') : t('invoices.newInvoice')}</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700 }}>
+        {/* eslint-disable-next-line no-nested-ternary */}
+        {duplicateData ? t('invoices.duplicateInvoice') : isEdit ? t('invoices.editInvoice') : t('invoices.newInvoice')}
+      </DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2.5} sx={{ pt: 1 }}>
           {apiError && <Alert severity="error">{apiError}</Alert>}
@@ -168,7 +216,7 @@ export default function InvoiceDialog({ open, onClose, onSuccess, initialData })
             </FormControl>
             <FormControl fullWidth required error={!!errors.currency}>
               <InputLabel>{t('common.currency')}</InputLabel>
-              <Select value={form.currency} label={t('common.currency')} onChange={setField('currency')}>
+              <Select value={form.currency} label={t('common.currency')} onChange={handleCurrencyChange}>
                 {CURRENCIES.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
               </Select>
               {errors.currency && <FormHelperText>{errors.currency}</FormHelperText>}
@@ -203,7 +251,7 @@ export default function InvoiceDialog({ open, onClose, onSuccess, initialData })
               <Table size="small">
                 <TableHead>
                   <TableRow sx={{ '& th': { bgcolor: 'grey.50', fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'text.secondary', py: 1.25 } }}>
-                    <TableCell sx={{ width: '38%' }}>{t('common.description')}</TableCell>
+                    <TableCell sx={{ width: '38%' }}>{t('items.item')}</TableCell>
                     <TableCell sx={{ width: '12%' }}>{t('common.qty')}</TableCell>
                     <TableCell sx={{ width: '16%' }}>{t('common.unitPrice')}</TableCell>
                     <TableCell sx={{ width: '10%' }}>{t('common.vatPercent')}</TableCell>
@@ -215,11 +263,19 @@ export default function InvoiceDialog({ open, onClose, onSuccess, initialData })
                   {lines.map((line, i) => (
                     <TableRow key={i} sx={{ '&:last-child td': { borderBottom: 0 }, '&:hover': { bgcolor: 'action.hover' }, transition: 'background-color 0.15s' }}>
                       <TableCell>
-                        <TextField
-                          size="small" fullWidth variant="standard"
-                          placeholder={t('invoices.serviceDescriptionPlaceholder')}
-                          value={line.description} onChange={setLine(i, 'description')}
-                        />
+                        <Select
+                          size="small" fullWidth variant="standard" displayEmpty
+                          value={line.itemId} onChange={handleItemSelect(i)}
+                          renderValue={(val) => {
+                            if (!val) return <em style={{ color: '#aaa' }}>{t('items.selectItem')}</em>;
+                            const it = items.find((x) => x.id === val);
+                            return it ? it.name : line.description || val;
+                          }}
+                        >
+                          {items.filter((it) => it.currency === form.currency).map((it) => (
+                            <MenuItem key={it.id} value={it.id}>{it.name}</MenuItem>
+                          ))}
+                        </Select>
                       </TableCell>
                       <TableCell>
                         <TextField
@@ -314,8 +370,10 @@ InvoiceDialog.propTypes = {
   onClose: PropTypes.func.isRequired,
   onSuccess: PropTypes.func.isRequired,
   initialData: PropTypes.object,
+  duplicateData: PropTypes.object,
 };
 
 InvoiceDialog.defaultProps = {
   initialData: null,
+  duplicateData: null,
 };

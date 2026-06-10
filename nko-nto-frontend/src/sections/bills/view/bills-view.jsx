@@ -3,12 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Box, Button, Card, Chip, CircularProgress, IconButton, InputAdornment,
-  MenuItem, Select, Stack, Table, TableBody, TableCell, TableContainer,
+  Menu, MenuItem, Select, Stack, Table, TableBody, TableCell, TableContainer,
   TableHead, TablePagination, TableRow, TableSortLabel, TextField,
   Tooltip, Typography,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ClearIcon from '@mui/icons-material/Clear';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import EditIcon from '@mui/icons-material/Edit';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import { getBills, getExchangeRatesForDates } from '../../../utils/api';
 import BillDialog from '../bill-dialog';
@@ -44,6 +47,10 @@ export default function BillsView() {
   const [loading, setLoading]       = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [rateMap, setRateMap]       = useState({});
+  const [menuAnchor, setMenuAnchor] = useState(null);
+  const [menuRow, setMenuRow]       = useState(null);
+  const [editRow, setEditRow]       = useState(null);
+  const [duplicateRow, setDuplicateRow] = useState(null);
 
   const [page, setPage]               = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(20);
@@ -133,6 +140,11 @@ export default function BillsView() {
   const hasFilter = search || status || from || to;
 
   const handleSuccess = () => { setDialogOpen(false); load(); };
+
+  const openMenu = (e, row) => { e.stopPropagation(); setMenuAnchor(e.currentTarget); setMenuRow(row); };
+  const closeMenu = () => { setMenuAnchor(null); setMenuRow(null); };
+  const handleEdit = () => { setEditRow(menuRow); closeMenu(); };
+  const handleDuplicate = () => { setDuplicateRow(menuRow); closeMenu(); };
 
   return (
     <Stack spacing={3}>
@@ -235,12 +247,13 @@ export default function BillsView() {
                     ) : col.label}
                   </TableCell>
                 ))}
+                <TableCell padding="checkbox" />
               </TableRow>
             </TableHead>
             <TableBody>
               {!loading && rows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={columns.length + 1} align="center" sx={{ py: 6 }}>
                     <Typography variant="body2" color="text.secondary">
                       {t('bills.noBillsYet')}
                     </Typography>
@@ -273,6 +286,11 @@ export default function BillsView() {
                         size="small"
                       />
                     </TableCell>
+                    <TableCell padding="checkbox" onClick={(e) => e.stopPropagation()}>
+                      <IconButton size="small" onClick={(e) => openMenu(e, row)}>
+                        <MoreVertIcon fontSize="small" />
+                      </IconButton>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -295,6 +313,28 @@ export default function BillsView() {
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onSuccess={handleSuccess}
+      />
+
+      <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
+        <MenuItem onClick={handleEdit}>
+          <EditIcon fontSize="small" sx={{ mr: 1.5 }} />{t('common.edit')}
+        </MenuItem>
+        <MenuItem onClick={handleDuplicate}>
+          <ContentCopyIcon fontSize="small" sx={{ mr: 1.5 }} />{t('common.duplicate')}
+        </MenuItem>
+      </Menu>
+
+      <BillDialog
+        open={Boolean(editRow)}
+        onClose={() => setEditRow(null)}
+        onSuccess={() => { setEditRow(null); load(); }}
+        initialData={editRow}
+      />
+      <BillDialog
+        open={Boolean(duplicateRow)}
+        onClose={() => setDuplicateRow(null)}
+        onSuccess={() => { setDuplicateRow(null); load(); }}
+        duplicateData={duplicateRow}
       />
     </Stack>
   );
