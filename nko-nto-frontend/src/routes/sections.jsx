@@ -21,6 +21,7 @@ const SignupPage = lazy(() => import('../pages/signup'));
 const VerifyEmailPage = lazy(() => import('../pages/verify-email'));
 const AcceptInvitePage = lazy(() => import('../pages/accept-invite'));
 const TeamSettingsPage = lazy(() => import('../pages/settings/team'));
+const ItemsPage = lazy(() => import('../pages/items'));
 
 function LoadingFallback() {
   return (
@@ -70,6 +71,7 @@ export default function Router() {
         { path: '/bills/:id', element: <Lazy page={BillDetailPage} /> },
         { path: '/contacts', element: <Lazy page={ContactsPage} /> },
         { path: '/contacts/:id', element: <Lazy page={ContactDetailPage} /> },
+        { path: '/items', element: <Lazy page={ItemsPage} /> },
         { path: '/settings/general', element: <Lazy page={GeneralSettingsPage} /> },
         { path: '/settings/exchange-rates', element: <Lazy page={ExchangeRatesPage} /> },
         { path: '/settings/data-import', element: <Lazy page={DataImportPage} /> },

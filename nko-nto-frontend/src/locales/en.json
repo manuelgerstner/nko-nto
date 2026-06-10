@@ -4,6 +4,7 @@
     "invoices": "Invoices",
     "bills": "Bills",
     "contacts": "Contacts",
+    "items": "Items",
     "settings": "Settings",
     "generalSettings": "General",
     "exchangeRates": "Exchange Rates",
@@ -16,6 +17,7 @@
     "saving": "Saving…",
     "saveChanges": "Save Changes",
     "edit": "Edit",
+    "duplicate": "Duplicate",
     "none": "None",
     "error": "Something went wrong.",
     "remove": "Remove",
@@ -44,7 +46,8 @@
     "address": "Address",
     "loading": "Loading…",
     "notFound": "Record not found.",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "noLineItems": "No line items."
   },
   "contactType": {
     "CUSTOMER": "Customer",
@@ -80,7 +83,10 @@
     "recentInvoices": "Recent Invoices",
     "recentBills": "Recent Bills",
     "noInvoicesPlaceholder": "No invoices yet. Create your first invoice to get started.",
-    "noBillsPlaceholder": "No bills yet. Add your first bill to track expenses."
+    "noBillsPlaceholder": "No bills yet. Add your first bill to track expenses.",
+    "monthlyOverview": "Monthly Overview",
+    "earnings": "Earnings",
+    "spendings": "Spendings"
   },
   "contacts": {
     "pageTitle": "Contacts",
@@ -99,6 +105,8 @@
   },
   "bills": {
     "pageTitle": "Bills",
+    "bill": "Bill",
+    "billFrom": "Bill From",
     "newBill": "New Bill",
     "createBill": "Create Bill",
     "supplier": "Supplier",
@@ -107,27 +115,46 @@
     "categoryPlaceholder": "e.g. Software",
     "itemDescriptionPlaceholder": "Item description",
     "editBill": "Edit Bill",
+    "duplicateBill": "Duplicate Bill",
     "noBillsYet": "No bills yet. Add your first supplier bill.",
     "referenceRequired": "Reference is required",
     "issueDateRequired": "Issue date is required",
     "currencyRequired": "Currency is required",
     "statusRequired": "Status is required",
-    "linesRequired": "Add at least one line item with a description and price"
+    "linesRequired": "Add at least one line item with an item selected and a price"
   },
   "invoices": {
     "pageTitle": "Invoices",
+    "invoice": "Invoice",
+    "billTo": "Bill To",
     "newInvoice": "New Invoice",
     "createInvoice": "Create Invoice",
     "invoiceNumber": "Invoice Number",
     "numberPlaceholder": "INV-2024-001",
     "serviceDescriptionPlaceholder": "Service description",
     "editInvoice": "Edit Invoice",
+    "duplicateInvoice": "Duplicate Invoice",
     "noInvoicesYet": "No invoices yet. Create your first invoice.",
     "numberRequired": "Number is required",
     "issueDateRequired": "Issue date is required",
     "currencyRequired": "Currency is required",
     "statusRequired": "Status is required",
-    "linesRequired": "Add at least one line item with a description and price"
+    "linesRequired": "Add at least one line item with an item selected and a price"
+  },
+  "items": {
+    "pageTitle": "Items",
+    "newItem": "New Item",
+    "createItem": "Create Item",
+    "editItem": "Edit Item",
+    "name": "Name",
+    "defaultPrice": "Default Price",
+    "defaultVatRate": "Default VAT %",
+    "noItemsYet": "No items yet. Create your first item to use in invoices and bills.",
+    "nameRequired": "Name is required",
+    "defaultPriceRequired": "Default price is required",
+    "selectItem": "Select item",
+    "item": "Item",
+    "currency": "Currency"
   },
   "dataImport": {
     "pageTitle": "Data Import",

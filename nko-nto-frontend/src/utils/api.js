@@ -46,8 +46,15 @@ export const createContact = (data) => api.post('/contacts', data);
 export const updateContact = (id, data) => api.put(`/contacts/${id}`, data);
 export const deleteContact = (id) => api.delete(`/contacts/${id}`);
 
+// -- Items --
+export const getItems = () => api.get('/items');
+export const createItem = (data) => api.post('/items', data);
+export const updateItem = (id, data) => api.put(`/items/${id}`, data);
+export const deleteItem = (id) => api.delete(`/items/${id}`);
+
 // -- Dashboard --
 export const getDashboardSummary = () => api.get('/dashboard/summary');
+export const getDashboardMonthlyChart = () => api.get('/dashboard/monthly-chart');
 
 // -- Exchange Rates --
 export const getExchangeRates = (params) => api.get('/exchange-rates', { params });

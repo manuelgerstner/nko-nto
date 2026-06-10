@@ -2,6 +2,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import RequestPageIcon from '@mui/icons-material/RequestPage';
 import PeopleIcon from '@mui/icons-material/People';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
 import SettingsIcon from '@mui/icons-material/Settings';
 import TuneIcon from '@mui/icons-material/Tune';
 import CurrencyExchangeIcon from '@mui/icons-material/CurrencyExchange';
@@ -13,6 +14,7 @@ const navConfig = [
   { title: 'nav.invoices',     path: '/invoices',                  icon: <ReceiptIcon /> },
   { title: 'nav.bills',        path: '/bills',                     icon: <RequestPageIcon /> },
   { title: 'nav.contacts',     path: '/contacts',                  icon: <PeopleIcon /> },
+  { title: 'nav.items',        path: '/items',                     icon: <Inventory2Icon /> },
   {
     title: 'nav.settings',
     icon: <SettingsIcon />,
